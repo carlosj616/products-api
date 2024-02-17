@@ -12,7 +12,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return Product::all();
+       return Product::with('category')->get();
     }
 
     /**
@@ -25,6 +25,7 @@ class ProductController extends Controller
         $product->name = $request->name;
         $product->description = $request->description;
         $product->price = $request->price;
+        $product->category_id = $request->categoryId;
 
         $product->save();
 
@@ -38,7 +39,7 @@ class ProductController extends Controller
      */
     public function show(string $id)
     {
-        $product = Product::find($id);
+        $product = Product::with('category')->find($id);
         if(!$product){
             return response()->json([
                 'message' => 'Producto No Encontrado.'
@@ -67,6 +68,7 @@ class ProductController extends Controller
         $product->name = $request->name;
         $product->description = $request->description;
         $product->price = $request->price;
+        $product->category_id = $request->categoryId;
 
         $product->save();
 
