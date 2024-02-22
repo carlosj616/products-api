@@ -26,6 +26,9 @@ class ProductController extends Controller
         $product->description = $request->description;
         $product->price = $request->price;
         $product->category_id = $request->categoryId;
+        $product->tags = $request->tags;
+        $product->fecha_inicio = $request->fechaInicio;
+        $product->fecha_fin = $request->fechaFin;
 
         $product->save();
 
@@ -69,6 +72,9 @@ class ProductController extends Controller
         $product->description = $request->description;
         $product->price = $request->price;
         $product->category_id = $request->categoryId;
+        $product->tags = $request->tags;
+        $product->fecha_inicio = $request->fechaInicio;
+        $product->fecha_fin = $request->fechaFin;
 
         $product->save();
 

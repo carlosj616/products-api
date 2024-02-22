@@ -19,6 +19,9 @@ return new class extends Migration
             $table->decimal('price', 10, 2)->default(0);
             $table->unsignedBigInteger('category_id');
             $table->foreign('category_id')->references('id')->on('categories');
+            $table->text('tags')->nullable();
+            $table->dateTime('fecha_inicio')->nullable();
+            $table->dateTime('fecha_fin')->nullable();  
             $table->timestamps();
         });
     }
