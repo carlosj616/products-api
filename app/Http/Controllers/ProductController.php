@@ -10,9 +10,44 @@ class ProductController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-       return Product::with('category')->get();
+        $query = Product::query();
+
+        if ($request->has('search')) {
+            $searchQuery = $request->input('search');
+
+            $query->where('name', 'like', '%' . $searchQuery . '%')
+                ->orWhere('description', 'like', '%' . $searchQuery . '%')
+                ->orWhereHas('category', function ($categoryQuery) use ($searchQuery) {
+                    $categoryQuery->where('name', 'like', '%' . $searchQuery . '%');
+                })
+                ->orWhere(function ($tagQuery) use ($searchQuery) {
+                    $tagQuery->where('tags', 'like', '%' . $searchQuery . '%');
+                });
+        }
+
+        if ($request->has('startDate') && $request->has('endDate')) {
+            $startDate = $request->input('startDate') . ' 00:00:00';
+            $endDate = $request->input('endDate') . ' 23:59:59';
+
+            $query->where(function ($query) use ($startDate, $endDate) {
+                $query->where(function ($query) use ($startDate, $endDate) {
+                    $query->where('fecha_inicio', '>=', $startDate)
+                        ->where('fecha_inicio', '<=', $endDate);
+                })->orWhere(function ($query) use ($startDate, $endDate) {
+                    $query->where('fecha_fin', '>=', $startDate)
+                        ->where('fecha_fin', '<=', $endDate);
+                })->orWhere(function ($query) use ($startDate, $endDate) {
+                    $query->where('fecha_inicio', '<=', $startDate)
+                        ->where('fecha_fin', '>=', $endDate);
+                });
+            });
+        }
+
+        $products = $query->with('category')->get();
+
+        return response()->json($products);
     }
 
     /**
@@ -33,8 +68,8 @@ class ProductController extends Controller
         $product->save();
 
         return response()->json([
-            'message'=>'Producto Guardado.'
-        ],200);
+            'message' => 'Producto Guardado.'
+        ], 200);
     }
 
     /**
@@ -43,16 +78,15 @@ class ProductController extends Controller
     public function show(string $id)
     {
         $product = Product::with('category')->find($id);
-        if(!$product){
+        if (!$product) {
             return response()->json([
                 'message' => 'Producto No Encontrado.'
-            ],404);
+            ], 404);
         }
 
         return response()->json([
             'product' => $product
-        ],200);
-
+        ], 200);
     }
 
     /**
@@ -61,12 +95,12 @@ class ProductController extends Controller
     public function update(Request $request, string $id)
     {
         $product = Product::find($id);
-        if(!$product){
+        if (!$product) {
             return response()->json([
                 'message' => 'Producto No Encontrado.'
-            ],404);
+            ], 404);
         }
-        
+
         $product->foto = $request->foto;
         $product->name = $request->name;
         $product->description = $request->description;
@@ -79,9 +113,8 @@ class ProductController extends Controller
         $product->save();
 
         return response()->json([
-            'message'=>'Producto Actualizado.'
-        ],200);
-
+            'message' => 'Producto Actualizado.'
+        ], 200);
     }
 
     /**
@@ -90,16 +123,16 @@ class ProductController extends Controller
     public function destroy(string $id)
     {
         $product = Product::find($id);
-        if(!$product){
+        if (!$product) {
             return response()->json([
                 'message' => 'Producto No Encontrado.'
-            ],404);
+            ], 404);
         }
 
         $product->delete();
 
         return response()->json([
-            'message'=>'Producto Eliminado.'
-        ],200);
+            'message' => 'Producto Eliminado.'
+        ], 200);
     }
 }
