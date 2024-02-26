@@ -21,4 +21,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::apiResource('products', ProductController::class);
+Route::post('products/reporte-pdf', [ProductController::class, 'generarReportePDF']);
 Route::apiResource('categories', CategoryController::class);

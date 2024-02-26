@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ProductController extends Controller
 {
@@ -134,5 +135,22 @@ class ProductController extends Controller
         return response()->json([
             'message' => 'Producto Eliminado.'
         ], 200);
+    }
+
+    public function generarReportePDF(Request $request)
+    {
+        $productosJson = $request->getContent();
+        $productos = json_decode($productosJson, true);
+
+        if ($productos === null) {
+            return response()->json(['error' => 'Error al decodificar JSON'], 400);
+        }
+
+        $data = [
+            'productos' => $productos
+        ];
+
+        $pdf = PDF::loadView('pdf.productsPdf', $data);
+        return $pdf->download();
     }
 }
