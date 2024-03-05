@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Exports\ProductExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Collection;
 
 class ProductController extends Controller
 {
@@ -18,14 +21,14 @@ class ProductController extends Controller
         if ($request->has('search')) {
             $searchQuery = $request->input('search');
 
-            $query->where('name', 'like', '%' . $searchQuery . '%')
-                ->orWhere('description', 'like', '%' . $searchQuery . '%')
-                ->orWhereHas('category', function ($categoryQuery) use ($searchQuery) {
-                    $categoryQuery->where('name', 'like', '%' . $searchQuery . '%');
-                })
-                ->orWhere(function ($tagQuery) use ($searchQuery) {
-                    $tagQuery->where('tags', 'like', '%' . $searchQuery . '%');
-                });
+            $query->where(function ($query) use ($searchQuery) {
+                $query->where('name', 'like', '%' . $searchQuery . '%')
+                    ->orWhere('description', 'like', '%' . $searchQuery . '%')
+                    ->orWhereHas('category', function ($categoryQuery) use ($searchQuery) {
+                        $categoryQuery->where('name', 'like', '%' . $searchQuery . '%');
+                    })
+                    ->orWhere('tags', 'like', '%' . $searchQuery . '%');
+            });
         }
 
         if ($request->has('startDate') && $request->has('endDate')) {
@@ -46,7 +49,10 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->with('category')->get();
+        $perPage = $request->input('per_page', 20);
+
+        // $products = $query->with('category')->get();
+        $products = $query->with('category')->paginate($perPage);
 
         return response()->json($products);
     }
@@ -152,5 +158,20 @@ class ProductController extends Controller
 
         $pdf = PDF::loadView('pdf.productsPdf', $data);
         return $pdf->download();
+    }
+
+    public function generarReporteExcel(Request $request)
+    {
+        $productosJson = $request->getContent();
+        $productos = json_decode($productosJson, true);
+
+        if ($productos === null) {
+            return response()->json(['error' => 'Error al decodificar JSON'], 400);
+        }
+
+        // Convertir los datos a una instancia de Collection
+        $productosCollection = new Collection($productos);
+
+        return Excel::download(new ProductExport($productosCollection), 'productos.xlsx');
     }
 }
